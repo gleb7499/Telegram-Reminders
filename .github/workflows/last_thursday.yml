@@ -1,32 +1,32 @@
 name: Monthly Library Reminder
 
-# Запускается каждый четверг в 09:00 UTC (12:00 MSK)
+# Запускается каждый четверг в 07:00 UTC (10:00 MSK)
 on:
   schedule:
-    - cron: '0 9 * * 4'  # Каждый четверг в 09:00 UTC
-  
+    - cron: "0 7 * * 4" # Каждый четверг в 07:00 UTC
+
   # Возможность запуска вручную для тестирования
   workflow_dispatch:
 
 jobs:
   send-reminder:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: 🐍 Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-          cache: 'pip'
-      
+          python-version: "3.11"
+          cache: "pip"
+
       - name: 📦 Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-      
+
       - name: 📨 Send Telegram message
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
