@@ -1,417 +1,69 @@
-# 📬 Telegram Reminders
+# Telegram Reminders
 
-> Автоматическая система напоминаний через Telegram Bot с использованием GitHub Actions
+A small personal automation that sends a scheduled Telegram reminder on the last Thursday of each month. I built it for my own recurring reminder workflow, but the setup is generic enough to reuse for other private notifications.
 
-[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
-[![GitHub Actions](https://img.shields.io/badge/GitHub-Actions-2088FF.svg)](https://github.com/features/actions)
-[![Telegram Bot API](https://img.shields.io/badge/Telegram-Bot%20API-26A5E4.svg)](https://core.telegram.org/bots/api)
+## The problem
 
----
+A monthly reminder is easy to forget when it depends on a calendar rule rather than a fixed date. Checking the calendar manually every month adds friction and makes the process unreliable.
 
-## 📑 Оглавление
+## The solution
 
-- [📬 Telegram Reminders](#-telegram-reminders)
-  - [📑 Оглавление](#-оглавление)
-  - [🎯 Описание](#-описание)
-  - [📁 Структура проекта](#-структура-проекта)
-  - [⚙️ Как это работает](#️-как-это-работает)
-    - [📅 Логика определения последнего четверга](#-логика-определения-последнего-четверга)
-    - [🔒 Безопасность](#-безопасность)
-  - [🚀 Пошаговая инструкция по настройке](#-пошаговая-инструкция-по-настройке)
-    - [Шаг 1: Создание Telegram бота](#шаг-1-создание-telegram-бота)
-    - [Шаг 2: Получение Chat ID](#шаг-2-получение-chat-id)
-    - [Шаг 3: Создание репозитория на GitHub](#шаг-3-создание-репозитория-на-github)
-    - [Шаг 4: Добавление секретов в GitHub](#шаг-4-добавление-секретов-в-github)
-    - [Шаг 5: Загрузка кода в репозиторий](#шаг-5-загрузка-кода-в-репозиторий)
-    - [Шаг 6: Проверка работы](#шаг-6-проверка-работы)
-      - [Тест вручную](#тест-вручную)
-      - [Автоматическая работа](#автоматическая-работа)
-  - [🧪 Локальное тестирование](#-локальное-тестирование)
-    - [1. Установите зависимости](#1-установите-зависимости)
-    - [2. Установите переменные окружения](#2-установите-переменные-окружения)
-    - [3. Запустите скрипт](#3-запустите-скрипт)
-  - [🔍 Проверка статуса](#-проверка-статуса)
-    - [Как убедиться, что всё работает](#как-убедиться-что-всё-работает)
-  - [� Возможные ошибки и их решение](#-возможные-ошибки-и-их-решение)
-    - [Ошибка: "Chat not found"](#ошибка-chat-not-found)
-    - [Ошибка: "Unauthorized" или "401 Unauthorized"](#ошибка-unauthorized-или-401-unauthorized)
-    - [Ошибка: "Connection timeout" или "Request timeout"](#ошибка-connection-timeout-или-request-timeout)
-    - [Ошибка: "Bot was blocked by the user"](#ошибка-bot-was-blocked-by-the-user)
-    - [Ошибка: переменная окружения не установлена](#ошибка-переменная-окружения-не-установлена)
-    - [Ошибка: "Module not found" или "No module named 'requests'"](#ошибка-module-not-found-или-no-module-named-requests)
-    - [Ошибка: Workflow не запускается автоматически](#ошибка-workflow-не-запускается-автоматически)
-    - [Ошибка: "Bad Request: message text is empty"](#ошибка-bad-request-message-text-is-empty)
-    - [Ошибка: Сообщения приходят каждый четверг, а не только в последний](#ошибка-сообщения-приходят-каждый-четверг-а-не-только-в-последний)
-    - [Общие рекомендации по отладке](#общие-рекомендации-по-отладке)
-  - [�💡 Идеи для будущего расширения](#-идеи-для-будущего-расширения)
-  - [🛠 Технологии](#-технологии)
-  - [📝 Лицензия](#-лицензия)
-  - [🤝 Поддержка](#-поддержка)
+The project combines a short Python script with GitHub Actions. The workflow runs every Thursday, the script checks whether the current day is the last Thursday of the month, and only then sends a Telegram message.
 
----
+## How it works
 
-## 🎯 Описание
+1. GitHub Actions starts the workflow at 07:00 UTC every Thursday.
+2. `send_message.py` checks whether the next Thursday belongs to another month.
+3. If today is the last Thursday, the script sends the reminder through the Telegram Bot API.
+4. The bot token and destination chat ID are read from environment variables or GitHub Secrets.
 
-Простая, но реальная автоматизация ежемесячных напоминаний через Telegram. Бот отправляет сообщение **в последний четверг каждого месяца** в 07:00 UTC (10:00 МСК).
+## Setup
 
-**Текущая задача:** Напоминание о санитарном дне в библиотеке.
+### 1. Create a Telegram bot
 
-Проект спроектирован как **MVP** личной системы напоминаний — минимально достаточный, но с чистой архитектурой для будущего расширения.
+Create a bot through [@BotFather](https://t.me/BotFather) and save the generated token. Start a conversation with the bot and obtain the destination chat ID through the Telegram Bot API.
 
----
+### 2. Configure GitHub Secrets
 
-## 📁 Структура проекта
+Add these repository secrets under **Settings > Secrets and variables > Actions**:
 
-```text
-telegram-reminder/
-│
-├── send_message.py            # Основной скрипт отправки сообщений
-├── requirements.txt           # Python-зависимости
-├── .github/
-│   └── workflows/
-│       └── last_thursday.yml  # GitHub Actions workflow
-├── README.md                  # Документация (этот файл)
-└── .gitignore                 # Игнорируемые файлы
-```
+- `TELEGRAM_BOT_TOKEN`;
+- `TELEGRAM_CHAT_ID`.
 
----
+Never put either value in the repository, README, workflow file, or command history.
 
-## ⚙️ Как это работает
-
-### 📅 Логика определения последнего четверга
-
-1. GitHub Actions запускается **каждый четверг** в 07:00 UTC
-2. Скрипт проверяет: является ли сегодня последним четвергом месяца?
-   - Если да → отправляет сообщение
-   - Если нет → пропускает отправку и завершается
-3. Проверка: если следующий четверг уже в другом месяце — значит сегодня последний
-
-### 🔒 Безопасность
-
-Все чувствительные данные (токен бота, chat ID) хранятся в **GitHub Secrets** и передаются через переменные окружения.
-
----
-
-## 🚀 Пошаговая инструкция по настройке
-
-### Шаг 1: Создание Telegram бота
-
-1. Откройте Telegram и найдите бота **[@BotFather](https://t.me/BotFather)**
-2. Отправьте команду `/newbot`
-3. Придумайте **имя** для бота (например: `Library Reminder`)
-4. Придумайте **username** для бота (должен заканчиваться на `bot`, например: `library_reminder_bot`)
-5. BotFather выдаст вам **токен** вида:
-
-   ```text
-   1234567890:ABCdefGHIjklMNOpqrsTUVwxyz123456789
-   ```
-
-6. **Сохраните этот токен** — он понадобится позже
-
-### Шаг 2: Получение Chat ID
-
-1. Найдите вашего бота в Telegram по username
-2. Нажмите **Start** или отправьте любое сообщение боту
-3. Откройте в браузере URL (замените `YOUR_BOT_TOKEN` на токен из Шага 1):
-
-   ```text
-   https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates
-   ```
-
-4. В ответе найдите поле `"chat":{"id": 123456789}` — это ваш **Chat ID**
-5. **Сохраните Chat ID**
-
-**Пример:**
-
-```json
-{
-  "ok": true,
-  "result": [
-    {
-      "message": {
-        "chat": {
-          "id": 123456789,  ← Это ваш Chat ID
-          "first_name": "Имя",
-          "username": "username"
-        }
-      }
-    }
-  ]
-}
-```
-
-### Шаг 3: Создание репозитория на GitHub
-
-1. Зайдите на [GitHub](https://github.com/)
-2. Нажмите **New repository**
-3. Укажите имя: `Telegram-Reminders` (или любое другое)
-4. Выберите **Public** или **Private** (любой вариант работает)
-5. **НЕ ДОБАВЛЯЙТЕ** README, .gitignore, license (они уже есть в проекте)
-6. Нажмите **Create repository**
-
-### Шаг 4: Добавление секретов в GitHub
-
-1. Откройте созданный репозиторий
-2. Перейдите в **Settings** → **Secrets and variables** → **Actions**
-3. Нажмите **New repository secret**
-4. Добавьте **первый секрет:**
-   - **Name:** `TELEGRAM_BOT_TOKEN`
-   - **Value:** ваш токен от BotFather
-   - Нажмите **Add secret**
-5. Добавьте **второй секрет:**
-   - **Name:** `TELEGRAM_CHAT_ID`
-   - **Value:** ваш Chat ID
-   - Нажмите **Add secret**
-
-### Шаг 5: Загрузка кода в репозиторий
-
-Выполните команды в терминале (из папки проекта):
-
-```bash
-git init
-git add .
-git commit -m "Initial commit: Telegram reminder bot"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/Telegram-Reminders.git
-git push -u origin main
-```
-
-> **Замените** `YOUR_USERNAME` на ваш GitHub username
-
-### Шаг 6: Проверка работы
-
-#### Тест вручную
-
-1. Откройте ваш репозиторий на GitHub
-2. Перейдите в **Actions** → **Monthly Library Reminder**
-3. Нажмите **Run workflow** → **Run workflow**
-4. Дождитесь завершения (обычно ~30 секунд)
-5. Проверьте логи — скрипт покажет, последний ли сегодня четверг
-6. Если сегодня последний четверг — сообщение придёт в Telegram
-
-#### Автоматическая работа
-
-- Workflow запускается **каждый четверг в 07:00 UTC**
-- Если это последний четверг месяца — сообщение будет отправлено автоматически
-- Проверяйте историю запусков в разделе **Actions**
-
----
-
-## 🧪 Локальное тестирование
-
-Если хотите протестировать скрипт на своём компьютере:
-
-### 1. Установите зависимости
+### 3. Run locally
 
 ```bash
 pip install -r requirements.txt
-```
-
-### 2. Установите переменные окружения
-
-**Windows (CMD):**
-
-```cmd
-set TELEGRAM_BOT_TOKEN=ваш_токен
-set TELEGRAM_CHAT_ID=ваш_chat_id
-```
-
-**Windows (PowerShell):**
-
-```powershell
-$env:TELEGRAM_BOT_TOKEN="ваш_токен"
-$env:TELEGRAM_CHAT_ID="ваш_chat_id"
-```
-
-**Linux/Mac:**
-
-```bash
-export TELEGRAM_BOT_TOKEN="ваш_токен"
-export TELEGRAM_CHAT_ID="ваш_chat_id"
-```
-
-### 3. Запустите скрипт
-
-```bash
 python send_message.py
 ```
 
-Скрипт проверит, последний ли сегодня четверг, и отправит сообщение (или сообщит, что сегодня не тот день).
+For local testing, set the variables in the current shell:
 
----
+```powershell
+$env:TELEGRAM_BOT_TOKEN = "your_bot_token"
+$env:TELEGRAM_CHAT_ID = "your_chat_id"
+python send_message.py
+```
 
-## 🔍 Проверка статуса
+### 4. Run through GitHub Actions
 
-### Как убедиться, что всё работает
+Open the repository's **Actions** tab, select the reminder workflow, and use **Run workflow** for a manual test. Scheduled runs happen every Thursday; a message is sent only on the last Thursday of the month.
 
-1. **GitHub Actions:**
-   - Зайдите в **Actions** → посмотрите последние запуски
-   - Зелёная галочка ✅ = успешно, красный крестик ❌ = ошибка
-
-2. **Логи workflow:**
-   - Кликните на любой запуск → изучите логи
-   - Скрипт выводит понятные сообщения о каждом шаге
-
-3. **Telegram:**
-   - В последний четверг месяца проверьте чат с ботом
-   - Сообщение должно прийти в ~07:00 UTC (10:00 МСК)
-
----
-
-## � Возможные ошибки и их решение
-
-### Ошибка: "Chat not found"
-
-**Причина:** Бот не может отправить сообщение пользователю, который не инициировал диалог с ботом.
-
-**Решение:**
-
-1. Найдите вашего бота в Telegram по username
-2. Нажмите кнопку **Start** или отправьте любое сообщение боту
-3. Получите Chat ID заново через метод `getUpdates`
-4. Обновите секрет `TELEGRAM_CHAT_ID` в GitHub
-
-### Ошибка: "Unauthorized" или "401 Unauthorized"
-
-**Причина:** Неверный или недействительный токен бота.
-
-**Решение:**
-
-1. Проверьте токен в GitHub Secrets (`TELEGRAM_BOT_TOKEN`)
-2. Убедитесь, что нет лишних пробелов в начале или конце токена
-3. Проверьте, что токен скопирован полностью
-4. Если токен утерян — создайте нового бота через [@BotFather](https://t.me/BotFather)
-5. Или используйте команду `/token` в BotFather для восстановления токена существующего бота
-
-### Ошибка: "Connection timeout" или "Request timeout"
-
-**Причина:** Проблемы с сетевым соединением или API Telegram временно недоступен.
-
-**Решение:**
-
-- Подождите 5-10 минут и попробуйте снова
-- Проверьте статус Telegram API: <https://downdetector.com/status/telegram/>
-- Проверьте статус GitHub Actions: <https://www.githubstatus.com/>
-- Workflow автоматически повторит попытку на следующий четверг
-
-### Ошибка: "Bot was blocked by the user"
-
-**Причина:** Получатель заблокировал бота в Telegram.
-
-**Решение:**
-
-1. Попросите получателя разблокировать бота
-2. Или найти бота в Telegram и нажать кнопку **Restart** / **Разблокировать**
-
-### Ошибка: переменная окружения не установлена
-
-**Симптомы:** В логах GitHub Actions видно сообщение:
+## Project structure
 
 ```text
-⚠️  Переменная окружения TELEGRAM_BOT_TOKEN не установлена!
-❌ Не все переменные окружения установлены!
+send_message.py                 # Date rule and Telegram API call
+requirements.txt                # Python dependencies
+.github/workflows/last_thursday.yml
+                                # Scheduled GitHub Actions workflow
 ```
 
-**Решение:**
+## Security
 
-1. Откройте ваш репозиторий на GitHub
-2. **Settings** → **Secrets and variables** → **Actions**
-3. Проверьте наличие обоих секретов:
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_CHAT_ID`
-4. Убедитесь, что имена написаны **точно** (с учётом регистра)
-5. Если секретов нет — добавьте их через **New repository secret**
+All credentials are injected at runtime. If a bot token is ever exposed, revoke it through BotFather immediately and create a replacement.
 
-### Ошибка: "Module not found" или "No module named 'requests'"
+## License
 
-**Причина:** Не установлены зависимости Python (актуально для локального тестирования).
-
-**Решение:**
-
-```bash
-pip install -r requirements.txt
-```
-
-### Ошибка: Workflow не запускается автоматически
-
-**Причина:** GitHub Actions может быть отключен для репозитория или cron-расписание еще не сработало.
-
-**Решение:**
-
-1. Откройте **Settings** → **Actions** → **General**
-2. Убедитесь, что Actions включены (Allow all actions)
-3. Проверьте, что workflow находится в ветке `main`
-4. Помните: первый запуск по cron произойдет только в ближайший четверг в 07:00 UTC
-5. Для проверки используйте ручной запуск через **Run workflow**
-
-### Ошибка: "Bad Request: message text is empty"
-
-**Причина:** Текст сообщения пустой (маловероятно при текущей реализации).
-
-**Решение:**
-
-- Проверьте переменную `message` в файле `send_message.py`
-- Убедитесь, что строка `message = "Сегодня в библиотеке санитарный день!"` не изменена
-
-### Ошибка: Сообщения приходят каждый четверг, а не только в последний
-
-**Причина:** Логика проверки `is_last_thursday_of_month()` работает некорректно (маловероятно).
-
-**Решение:**
-
-1. Проверьте логи GitHub Actions — там должно быть сообщение о проверке даты
-2. Убедитесь, что функция `is_last_thursday_of_month()` не была изменена
-3. Если проблема сохраняется — создайте issue в репозитории
-
-### Общие рекомендации по отладке
-
-1. **Проверяйте логи:** Все ошибки отображаются в логах GitHub Actions
-2. **Запускайте вручную:** Используйте **Run workflow** для тестирования
-3. **Локальное тестирование:** Запустите `send_message.py` локально с переменными окружения
-4. **Проверьте дату:** Убедитесь, что тестируете в правильный день (последний четверг месяца)
-
----
-
-## �💡 Идеи для будущего расширения
-
-Проект спроектирован для простого расширения. Возможные улучшения:
-
-- **Множественные получатели:** Добавить список chat_id для отправки нескольким людям
-- **Конфигурационный файл:** Вынести тексты сообщений и расписание в YAML/JSON
-- **Разные типы напоминаний:** Еженедельные, ежемесячные по разным дням, custom cron
-- **База данных напоминаний:** SQLite для хранения истории отправок
-- **Webhook-версия:** Превратить в Telegram бота с командами для управления напоминаниями
-- **Уведомления об ошибках:** Отправка в Telegram сообщений об ошибках выполнения
-- **Интерактивность:** Кнопки для подтверждения получения напоминания
-- **Локализация:** Поддержка разных языков для разных получателей
-- **Timezone support:** Настройка часового пояса для каждого получателя
-
----
-
-## 🛠 Технологии
-
-- **Python 3.11+** — язык программирования
-- **Telegram Bot API** — отправка сообщений
-- **GitHub Actions** — автоматизация и планирование
-- **requests** — HTTP-клиент для работы с API
-
----
-
-## 📝 Лицензия
-
-MIT License — используйте свободно для личных и коммерческих проектов.
-
----
-
-## 🤝 Поддержка
-
-Если что-то не работает:
-
-1. Проверьте логи GitHub Actions
-2. Убедитесь, что секреты установлены правильно
-3. Проверьте, что бот не заблокирован в чате
-4. Убедитесь, что токен бота действителен
-
----
-
-Сделано с ❤️ для автоматизации повседневных задач
+This personal automation is available under the [Creative Commons Attribution-NonCommercial 4.0 International license](LICENSE). Attribution to Loginov Gleb is required; commercial use requires prior written permission.
